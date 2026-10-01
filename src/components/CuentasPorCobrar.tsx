@@ -46,8 +46,22 @@ interface FilaEnvio {
 
 const money = (n: number) => `$${n.toFixed(2)}`;
 
+const moneyBs = (n: number) => `Bs. ${n.toFixed(2).replace('.', ',')}`;
+
 const fechaCorta = (fecha: string) =>
   new Date(fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+
+/** Obtiene la tasa del BCV desde localStorage (la misma que usa la calculadora) */
+const obtenerTasaBCV = (): number | null => {
+  try {
+    const raw = localStorage.getItem('bcv_tasa_cache');
+    if (!raw) return null;
+    const t = JSON.parse(raw) as { valor: number };
+    return t && t.valor > 0 ? t.valor : null;
+  } catch {
+    return null;
+  }
+};
 
 /** Convierte una fila de detalle_venta (con su producto) en un item simple */
 const mapearItem = (d: any): ItemVenta => {
@@ -70,14 +84,21 @@ const armarFactura = (cuenta: CuentaPorCliente): string => {
     )
     .join('\n');
 
-  return [
+  const tasa = obtenerTasaBCV();
+  const lineas = [
     `Hola ${cuenta.cliente.nombre_cliente}, tienes pendiente lo de las ventas:`,
     items,
-    `Total: ${money(cuenta.total)}`,
-    '',
-    ...DATOS_FACTURA,
-    'Mensaje generado automáticamente',
-  ].join('\n');
+    `Total en $: ${money(cuenta.total)}`,
+  ];
+
+  if (tasa) {
+    const totalBs = cuenta.total * tasa;
+    lineas.push(`Total en Bs: ${moneyBs(totalBs)}`);
+  }
+
+  lineas.push('', ...DATOS_FACTURA, 'Mensaje generado automáticamente');
+
+  return lineas.join('\n');
 };
 
 export default function CuentasPorCobrar() {

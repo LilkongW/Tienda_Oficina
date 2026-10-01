@@ -57,3 +57,6 @@ logs/
 
 # Build artifacts
 *.tsbuildinfo
+
+# Electron releases
+release/
