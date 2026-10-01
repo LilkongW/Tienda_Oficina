@@ -1,0 +1,303 @@
+/* ===== Variables ===== */
+:root {
+  --bcv-bg: #ffffff;
+  --bcv-bg-soft: #f6f7f9;
+  --bcv-bg-field: #f3f4f6;
+  --bcv-border: #e5e7eb;
+  --bcv-text: #111827;
+  --bcv-text-soft: #6b7280;
+  --bcv-primary: #2563eb;
+  --bcv-primary-hover: #1d4ed8;
+  --bcv-primary-soft: #eff6ff;
+  --bcv-danger: #dc2626;
+  --bcv-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
+  --bcv-radius: 16px;
+  --bcv-radius-sm: 10px;
+}
+
+/* ===== Botón flotante ===== */
+.bcv-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.45);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  z-index: 900;
+}
+.bcv-fab:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.55);
+}
+.bcv-fab:active {
+  transform: translateY(0) scale(0.98);
+}
+.bcv-fab:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.4);
+  outline-offset: 3px;
+}
+
+/* ===== Backdrop ===== */
+.bcv-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 1000;
+  animation: bcv-fade 0.18s ease;
+}
+@keyframes bcv-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ===== Panel ===== */
+.bcv-panel {
+  width: 100%;
+  max-width: 400px;
+  background: var(--bcv-bg);
+  border-radius: var(--bcv-radius);
+  box-shadow: var(--bcv-shadow);
+  overflow: hidden;
+  animation: bcv-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--bcv-text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+@keyframes bcv-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ===== Header ===== */
+.bcv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--bcv-border);
+  background: var(--bcv-bg);
+}
+.bcv-titulo {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--bcv-text);
+}
+
+/* ===== Botón icono ===== */
+.bcv-icono {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--bcv-text-soft);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.bcv-icono:hover:not(:disabled) {
+  background: var(--bcv-bg-field);
+  color: var(--bcv-text);
+}
+.bcv-icono:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Sección tasa ===== */
+.bcv-tasa {
+  padding: 16px 20px;
+  background: var(--bcv-bg-soft);
+  border-bottom: 1px solid var(--bcv-border);
+}
+.bcv-tasa-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.bcv-tasa-valor {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--bcv-text-soft);
+}
+.bcv-tasa-valor strong {
+  color: var(--bcv-text);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.bcv-tasa-acciones {
+  display: flex;
+  gap: 4px;
+}
+
+/* Edición de tasa */
+.bcv-tasa-edicion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.bcv-tasa-etiqueta {
+  font-size: 0.9rem;
+  color: var(--bcv-text-soft);
+  font-weight: 500;
+}
+
+/* ===== Mensaje ===== */
+.bcv-mensaje {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  color: var(--bcv-text-soft);
+  line-height: 1.35;
+}
+.bcv-mensaje-error {
+  color: var(--bcv-danger);
+}
+
+/* ===== Campos ===== */
+.bcv-campos {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.bcv-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bcv-etiqueta {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--bcv-text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.bcv-campo {
+  display: flex;
+  align-items: center;
+  background: var(--bcv-bg-field);
+  border: 1.5px solid transparent;
+  border-radius: var(--bcv-radius-sm);
+  padding: 0 14px;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.bcv-campo:focus-within {
+  background: var(--bcv-bg);
+  border-color: var(--bcv-primary);
+  box-shadow: 0 0 0 4px var(--bcv-primary-soft);
+}
+.bcv-campo-chico {
+  padding: 0 10px;
+  max-width: 140px;
+}
+.bcv-prefijo {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--bcv-text-soft);
+  margin-right: 8px;
+  user-select: none;
+}
+.bcv-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 14px 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--bcv-text);
+  outline: none;
+  font-variant-numeric: tabular-nums;
+}
+.bcv-input-chico {
+  padding: 10px 0;
+  font-size: 1rem;
+}
+.bcv-input::placeholder {
+  color: #9ca3af;
+  font-weight: 500;
+}
+.bcv-input:disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* ===== Pie ===== */
+.bcv-pie {
+  padding: 0 20px 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ===== Botones ===== */
+.bcv-boton {
+  border: none;
+  border-radius: var(--bcv-radius-sm);
+  background: var(--bcv-primary);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.bcv-boton:hover:not(:disabled) {
+  background: var(--bcv-primary-hover);
+}
+.bcv-boton:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.bcv-boton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.bcv-boton-suave {
+  background: var(--bcv-bg-field);
+  color: var(--bcv-text);
+}
+.bcv-boton-suave:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+/* ===== Spinner ===== */
+.bcv-girando {
+  animation: bcv-spin 0.9s linear infinite;
+}
+@keyframes bcv-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+  .bcv-fab {
+    right: 16px;
+    bottom: 16px;
+    width: 52px;
+    height: 52px;
+  }
+  .bcv-panel {
+    max-width: 100%;
+  }
+  .bcv-tasa-edicion {
+    gap: 6px;
+  }
+  .bcv-campo-chico {
+    max-width: 110px;
+  }
+}

@@ -1,0 +1,301 @@
+/* ---------- Lista de clientes ---------- */
+.cxc-lista {
+  display: grid;
+  gap: 16px;
+}
+
+.cxc-cliente-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.cxc-cliente-nombre {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.cxc-cliente-sub {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.cxc-cliente-total {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #dc2626;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Desglose por venta ---------- */
+.cxc-ventas {
+  display: grid;
+  gap: 10px;
+}
+
+.cxc-venta {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f9fafb;
+  border: 1px solid #eef0f3;
+}
+
+.cxc-venta-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.cxc-venta-monto {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cxc-items {
+  margin: 8px 0 0;
+  padding: 8px 0 0 12px;
+  list-style: none;
+  border-top: 1px dashed #d8dce2;
+  display: grid;
+  gap: 4px;
+}
+
+.cxc-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.cxc-item span:last-child {
+  font-variant-numeric: tabular-nums;
+}
+
+.cxc-cliente-pie {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* ---------- Botones propios ---------- */
+.cxc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.cxc-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.cxc-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cxc-btn-primario {
+  border-color: #1f6f5c;
+  background: #1f6f5c;
+  color: #fff;
+}
+
+.cxc-btn-primario:hover:not(:disabled) {
+  background: #185a4b;
+  border-color: #185a4b;
+}
+
+.cxc-btn:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+/* ---------- Header con dos botones ---------- */
+.cxc-header-acciones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btn-telegram {
+  background: #0088cc;
+  border-color: #0088cc;
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn-telegram:hover:not(:disabled) {
+  background: #0077b5;
+  border-color: #0077b5;
+}
+
+.btn-telegram:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Modal de factura ---------- */
+.cxc-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(17, 24, 39, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.cxc-modal {
+  width: min(480px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 20px;
+  border-radius: 14px;
+  background: #fff;
+  color: #1f2937;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.cxc-modal-titulo {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.cxc-modal-ayuda {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.cxc-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #f9fafb;
+  color: #1f2937;
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.cxc-textarea:focus {
+  outline: none;
+  border-color: #1f6f5c;
+  box-shadow: 0 0 0 3px rgba(31, 111, 92, 0.2);
+}
+
+.cxc-modal-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* ---------- Modal de envío masivo ---------- */
+.cxc-modal-envio {
+  width: min(520px, 100%);
+}
+
+.cxc-envio-lista {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid #eef0f3;
+  border-radius: 10px;
+  background: #f9fafb;
+}
+
+.cxc-envio-fila {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #eef0f3;
+}
+
+.cxc-envio-fila:last-child {
+  border-bottom: none;
+}
+
+.cxc-envio-nombre {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.cxc-envio-tel {
+  font-size: 0.82rem;
+  color: #6b7280;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.cxc-envio-ok {
+  background: #f0fdf4;
+}
+
+.cxc-envio-error {
+  background: #fef2f2;
+}
+
+.cxc-envio-sin-telefono {
+  opacity: 0.55;
+}
+
+.cxc-envio-enviando {
+  background: #eff6ff;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+  .cxc-cliente-header {
+    flex-direction: column;
+  }
+
+  .cxc-cliente-pie .cxc-btn,
+  .cxc-cliente-pie .btn {
+    flex: 1 1 100%;
+  }
+
+  .cxc-header-acciones {
+    width: 100%;
+  }
+
+  .cxc-header-acciones .btn,
+  .cxc-header-acciones .cxc-btn {
+    flex: 1 1 auto;
+  }
+}
