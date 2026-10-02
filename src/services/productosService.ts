@@ -1,69 +1,19 @@
-import { supabase } from '../lib/supabase';
 import type { Producto, ProductoInput } from '../types/database';
+import { deleteRow, newSyncUid, nextLocalId, nowIso, readOne, readTable, resolveLocalId, saveRow } from '../lib/dataAccess';
 
+const normalize = (row: Producto): Producto => ({ ...row, costo_unitario: Number(row.costo_paquete) / Number(row.unidades_por_paquete), costo_paquete: Number(row.costo_paquete), precio_venta: Number(row.precio_venta), stock_actual: Number(row.stock_actual) });
 export const productosService = {
-  async getAll(): Promise<Producto[]> {
-    const { data, error } = await supabase
-      .from('productos')
-      .select('*')
-      .order('nombre');
-    
-    if (error) throw error;
-    return data;
+  async getAll(): Promise<Producto[]> { return (await readTable('productos')).map(normalize).sort((a, b) => a.nombre.localeCompare(b.nombre)); },
+  async getById(id: number): Promise<Producto> { const row = await readOne('productos', id); if (!row) throw new Error('Producto no encontrado'); return normalize(row); },
+  async create(input: ProductoInput): Promise<Producto> {
+    const row: Producto = { id_producto: await nextLocalId('productos'), sync_uid: newSyncUid(), ...input, costo_unitario: input.costo_paquete / input.unidades_por_paquete, stock_actual: input.stock_actual ?? 0, created_at: nowIso(), updated_at: nowIso() };
+    await saveRow('productos', row, 'insert'); return { ...row, id_producto: await resolveLocalId('productos', row.id_producto) };
   },
-
-  async getById(id: number): Promise<Producto> {
-    const { data, error } = await supabase
-      .from('productos')
-      .select('*')
-      .eq('id_producto', id)
-      .single();
-    
-    if (error) throw error;
-    return data;
+  async update(id: number, input: Partial<ProductoInput>): Promise<Producto> {
+    const old = await this.getById(id);
+    const row: Producto = normalize({ ...old, ...input, costo_unitario: Number(input.costo_paquete ?? old.costo_paquete) / Number(input.unidades_por_paquete ?? old.unidades_por_paquete), updated_at: nowIso() });
+    await saveRow('productos', row, 'update'); return row;
   },
-
-  async create(producto: ProductoInput): Promise<Producto> {
-    const { data, error } = await supabase
-      .from('productos')
-      .insert(producto)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async update(id: number, producto: Partial<ProductoInput>): Promise<Producto> {
-    const { data, error } = await supabase
-      .from('productos')
-      .update(producto)
-      .eq('id_producto', id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async delete(id: number): Promise<void> {
-    const { error } = await supabase
-      .from('productos')
-      .delete()
-      .eq('id_producto', id);
-    
-    if (error) throw error;
-  },
-
-  async actualizarStock(id: number, cantidad: number): Promise<Producto> {
-    const { data, error } = await supabase
-      .from('productos')
-      .update({ stock_actual: cantidad })
-      .eq('id_producto', id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  }
+  async delete(id: number): Promise<void> { await deleteRow('productos', id); },
+  async actualizarStock(id: number, cantidad: number): Promise<Producto> { return this.update(id, { stock_actual: cantidad }); },
 };

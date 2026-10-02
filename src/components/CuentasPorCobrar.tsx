@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { supabase } from '../lib/supabase';
 import { ventasService } from '../services/ventasService';
+import { readTable } from '../lib/dataAccess';
 import {
   enviarTelegram,
   normalizarTelefono,
@@ -155,21 +155,16 @@ export default function CuentasPorCobrar() {
     try {
       if (mostrarSpinner) setLoading(true);
 
-      const { data, error } = await supabase
-        .from('ventas')
-        .select(`
-          id_venta,
-          fecha,
-          id_cliente,
-          estado_pago,
-          monto_total,
-          cliente:clientes(*),
-          detalle_venta(*, producto:productos(*))
-        `)
-        .eq('estado_pago', 'Pendiente')
-        .order('fecha', { ascending: false });
-
-      if (error) throw error;
+      const [ventas, clientes, detalles, productos] = await Promise.all([
+        readTable('ventas'), readTable('clientes'), readTable('detalle_venta'), readTable('productos'),
+      ]);
+      const data = ventas.filter((venta) => venta.estado_pago === 'Pendiente').sort((a, b) => b.fecha.localeCompare(a.fecha)).map((venta) => ({
+        ...venta,
+        cliente: clientes.find((cliente) => cliente.id_cliente === venta.id_cliente),
+        detalle_venta: detalles.filter((detalle) => detalle.id_venta === venta.id_venta).map((detalle) => ({
+          ...detalle, producto: productos.find((producto) => producto.id_producto === detalle.id_producto),
+        })),
+      }));
 
       const agrupadas: Record<number, CuentaPorCliente> = {};
 

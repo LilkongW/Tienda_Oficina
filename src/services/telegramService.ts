@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { getSupabaseClient } from '../lib/databaseProfiles';
 
 const BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string | undefined;
 
@@ -24,7 +24,7 @@ export const enlaceVinculacion = (idCliente: number): string | null =>
   BOT_USERNAME ? `https://t.me/${BOT_USERNAME}?start=${idCliente}` : null;
 
 const invocarBot = async <T>(body: Record<string, unknown>): Promise<T> => {
-  const { data, error } = await supabase.functions.invoke('telegram-bot', { body });
+  const { data, error } = await getSupabaseClient().functions.invoke('telegram-bot', { body });
   if (error) throw new Error(error.message || 'No se pudo conectar con la función Telegram');
   if (data?.error) throw new Error(data.error);
   return data as T;

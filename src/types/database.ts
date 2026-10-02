@@ -1,5 +1,6 @@
 export interface Producto {
   id_producto: number;
+  sync_uid?: string;
   nombre: string;
   unidades_por_paquete: number;
   costo_paquete: number;
@@ -20,6 +21,7 @@ export interface ProductoInput {
 
 export interface Cliente {
   id_cliente: number;
+  sync_uid?: string;
   nombre_cliente: string;
   telefono?: string | null;
   telegram_chat_id?: number | null;
@@ -34,6 +36,7 @@ export interface ClienteInput {
 
 export interface Venta {
   id_venta: number;
+  sync_uid?: string;
   fecha: string;
   id_cliente: number;
   estado_pago: 'Pagado' | 'Pendiente';
@@ -60,6 +63,7 @@ export interface VentaConItemsInput {
 
 export interface DetalleVenta {
   id_detalle: number;
+  sync_uid?: string;
   id_venta: number;
   id_producto: number;
   cantidad: number;

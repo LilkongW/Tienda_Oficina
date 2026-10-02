@@ -1,264 +1,104 @@
-import { useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { productosService } from '../services/productosService';
-import { clientesService } from '../services/clientesService';
-import { ventasService } from '../services/ventasService';
-
-interface TestResult {
-  name: string;
-  status: 'pending' | 'success' | 'error';
-  message: string;
-  duration?: number;
-}
+import { useCallback, useEffect, useState } from 'react';
+import { getActiveProfile, getProfiles, hasSupabaseConfig, saveProfiles, setActiveProfileId, type DatabaseProfile, type ProfileMode } from '../lib/databaseProfiles';
+import { localDatabase } from '../lib/localDatabase';
+import { refreshLocalCopy, synchronizePending } from '../lib/dataAccess';
 
 export default function DatabaseTest() {
-  const [tests, setTests] = useState<TestResult[]>([]);
-  const [isRunning, setIsRunning] = useState(false);
+  const [profiles, setProfiles] = useState(getProfiles());
+  const [profile, setProfile] = useState(getActiveProfile());
+  const [pending, setPending] = useState(0);
+  const [working, setWorking] = useState(false);
+  const [message, setMessage] = useState('');
+  const [online, setOnline] = useState(navigator.onLine);
 
-  const runTests = async () => {
-    setIsRunning(true);
-    const results: TestResult[] = [];
+  const loadPending = useCallback(async () => setPending((await localDatabase(getActiveProfile().id).pending()).length), []);
+  useEffect(() => {
+    void loadPending();
+    const update = () => setOnline(navigator.onLine);
+    window.addEventListener('online', update); window.addEventListener('offline', update);
+    return () => { window.removeEventListener('online', update); window.removeEventListener('offline', update); };
+  }, [loadPending]);
 
-    // Test 1: Conexión básica
-    results.push({ name: 'Conexión con Supabase', status: 'pending', message: 'Conectando...' });
-    setTests([...results]);
-    
+  const updateProfile = (changes: Partial<DatabaseProfile>) => setProfile((current) => ({ ...current, ...changes }));
+  const persist = () => {
+    if (!profile.name.trim()) { setMessage('Escribe un nombre para la tienda.'); return; }
+    if (profile.mode === 'supabase' && (!profile.url.trim() || !profile.key.trim())) { setMessage('Completa la URL y la clave pública de Supabase.'); return; }
+    const next = profiles.map((item) => item.id === profile.id ? profile : item);
+    saveProfiles(next); setProfiles(next); setActiveProfileId(profile.id); setMessage('Configuración guardada.');
+    window.location.reload();
+  };
+  const selectProfile = (id: string) => { setActiveProfileId(id); window.location.reload(); };
+  const createProfile = () => {
+    const created: DatabaseProfile = { id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`, name: `Nueva tienda ${profiles.length + 1}`, mode: 'offline', url: '', key: '', createdAt: new Date().toISOString() };
+    const next = [...profiles, created]; saveProfiles(next); setActiveProfileId(created.id); window.location.reload();
+  };
+  const removeProfile = () => {
+    if (profiles.length <= 1) { setMessage('Debe conservarse al menos un perfil.'); return; }
+    if (!window.confirm(`¿Eliminar el perfil “${profile.name}” y todos sus datos locales de este equipo?`)) return;
+    const next = profiles.filter((item) => item.id !== profile.id);
+    indexedDB.deleteDatabase(`ventas-local-${profile.id}`);
+    saveProfiles(next); setActiveProfileId(next[0].id); window.location.reload();
+  };
+  const synchronize = async () => {
+    setWorking(true); setMessage('Sincronizando…');
     try {
-      const start = performance.now();
-      const { data, error } = await supabase.from('productos').select('count', { count: 'exact', head: true });
-      const duration = performance.now() - start;
-      
-      if (error) throw error;
-      results[0] = { 
-        name: 'Conexión con Supabase', 
-        status: 'success', 
-        message: `Conectado - ${data?.[0]?.count ?? 0} productos en BD`,
-        duration 
-      };
-    } catch (error: any) {
-      results[0] = { 
-        name: 'Conexión con Supabase', 
-        status: 'error', 
-        message: error.message || 'Error de conexión' 
-      };
-    }
-    setTests([...results]);
-
-    // Test 2: Leer productos
-    results.push({ name: 'GET /productos', status: 'pending', message: 'Consultando productos...' });
-    setTests([...results]);
-    
+      const count = await synchronizePending();
+      await refreshLocalCopy();
+      setMessage(`Sincronización completada. Cambios enviados: ${count}.`);
+    } catch (error) { setMessage(`No se pudo completar la sincronización: ${error instanceof Error ? error.message : 'error desconocido'}`); }
+    finally { await loadPending(); setWorking(false); }
+  };
+  const runDiagnostics = async () => {
+    setWorking(true); setMessage('Revisando almacenamiento local…');
     try {
-      const start = performance.now();
-      const productos = await productosService.getAll();
-      const duration = performance.now() - start;
-      
-      results[1] = { 
-        name: 'GET /productos', 
-        status: 'success', 
-        message: `${productos.length} productos recuperados`,
-        duration 
-      };
-    } catch (error: any) {
-      results[1] = { 
-        name: 'GET /productos', 
-        status: 'error', 
-        message: error.message || 'Error al consultar productos' 
-      };
-    }
-    setTests([...results]);
-
-    // Test 3: Leer clientes
-    results.push({ name: 'GET /clientes', status: 'pending', message: 'Consultando clientes...' });
-    setTests([...results]);
-    
-    try {
-      const start = performance.now();
-      const clientes = await clientesService.getAll();
-      const duration = performance.now() - start;
-      
-      results[2] = { 
-        name: 'GET /clientes', 
-        status: 'success', 
-        message: `${clientes.length} clientes recuperados`,
-        duration 
-      };
-    } catch (error: any) {
-      results[2] = { 
-        name: 'GET /clientes', 
-        status: 'error', 
-        message: error.message || 'Error al consultar clientes' 
-      };
-    }
-    setTests([...results]);
-
-    // Test 4: Leer ventas
-    results.push({ name: 'GET /ventas', status: 'pending', message: 'Consultando ventas...' });
-    setTests([...results]);
-    
-    try {
-      const start = performance.now();
-      const ventas = await ventasService.getAll();
-      const duration = performance.now() - start;
-      
-      results[3] = { 
-        name: 'GET /ventas', 
-        status: 'success', 
-        message: `${ventas.length} ventas recuperadas`,
-        duration 
-      };
-    } catch (error: any) {
-      results[3] = { 
-        name: 'GET /ventas', 
-        status: 'error', 
-        message: error.message || 'Error al consultar ventas' 
-      };
-    }
-    setTests([...results]);
-
-    // Test 5: Cuentas por cobrar
-    results.push({ name: 'GET /ventas?estado=Pendiente', status: 'pending', message: 'Consultando cuentas por cobrar...' });
-    setTests([...results]);
-    
-    try {
-      const start = performance.now();
-      const cuentas = await ventasService.getCuentasPorCobrar();
-      const duration = performance.now() - start;
-      
-      results[4] = { 
-        name: 'GET /ventas?estado=Pendiente', 
-        status: 'success', 
-        message: `${cuentas.length} cuentas por cobrar`,
-        duration 
-      };
-    } catch (error: any) {
-      results[4] = { 
-        name: 'GET /ventas?estado=Pendiente', 
-        status: 'error', 
-        message: error.message || 'Error al consultar cuentas por cobrar' 
-      };
-    }
-    setTests([...results]);
-
-    setIsRunning(false);
+      const local = localDatabase(profile.id);
+      const [productos, clientes, ventas, detalles] = await Promise.all([local.all('productos'), local.all('clientes'), local.all('ventas'), local.all('detalle_venta')]);
+      let status = `Base local disponible: ${productos.length} productos, ${clientes.length} clientes, ${ventas.length} ventas y ${detalles.length} detalles.`;
+      if (hasSupabaseConfig(profile) && navigator.onLine) {
+        await refreshLocalCopy(); status += ' Supabase respondió y la copia local fue actualizada.';
+      } else if (profile.mode === 'supabase') status += ' Supabase configurado; se usará la copia local mientras no haya conexión.';
+      else status += ' Perfil configurado para trabajar solo sin conexión.';
+      setMessage(status);
+    } catch (error) { setMessage(error instanceof Error ? error.message : 'Error de diagnóstico'); }
+    finally { await loadPending(); setWorking(false); }
   };
 
-  const getStatusIcon = (status: TestResult['status']) => {
-    switch (status) {
-      case 'pending': return '⏳';
-      case 'success': return '✅';
-      case 'error': return '❌';
-    }
-  };
-
-  const getStatusClass = (status: TestResult['status']) => {
-    switch (status) {
-      case 'pending': return 'test-pending';
-      case 'success': return 'test-success';
-      case 'error': return 'test-error';
-    }
-  };
-
-  return (
-    <div>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">🔧 Diagnóstico de Base de Datos</h1>
-          <p className="page-description">Prueba de conexión y endpoints API</p>
-        </div>
-        <button
-          onClick={runTests}
-          disabled={isRunning}
-          className="btn btn-primary"
-        >
-          {isRunning ? '⏳ Ejecutando...' : '🚀 Ejecutar Pruebas'}
-        </button>
-      </div>
-
-      <div className="card">
-        <h2 className="form-title mb-4">Configuración de Supabase</h2>
-        <div className="form-grid">
-          <div className="form-group">
-            <label>URL de Supabase</label>
-            <input
-              type="text"
-              value={import.meta.env.VITE_SUPABASE_URL || 'No configurada'}
-              disabled
-              className="bg-gray-100"
-            />
-          </div>
-          <div className="form-group">
-            <label>API Key</label>
-            <input
-              type="text"
-              value={import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ? 'Configurada ✓' : 'No configurada ✗'}
-              disabled
-              className="bg-gray-100"
-            />
-          </div>
-        </div>
-      </div>
-
-      {tests.length > 0 && (
-        <div className="card">
-          <h2 className="form-title mb-4">Resultados de Pruebas</h2>
-          <div className="space-y-3">
-            {tests.map((test, index) => (
-              <div key={index} className={`test-result ${getStatusClass(test.status)}`}>
-                <div className="test-result-header">
-                  <span className="test-result-icon">{getStatusIcon(test.status)}</span>
-                  <span className="test-result-name">{test.name}</span>
-                  {test.duration && (
-                    <span className="test-result-duration">{test.duration.toFixed(0)}ms</span>
-                  )}
-                </div>
-                <div className="test-result-message">{test.message}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4 pt-4 border-t">
-            <div className="flex gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-success">✅</span>
-                <span className="text-sm">
-                  {tests.filter(t => t.status === 'success').length} exitosas
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-danger">❌</span>
-                <span className="text-sm">
-                  {tests.filter(t => t.status === 'error').length} fallidas
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {tests.length > 0 && tests.every(t => t.status === 'success') && (
-        <div className="alert alert-success">
-          <div className="alert-title">🎉 ¡Todas las pruebas pasaron!</div>
-          <div className="alert-body">
-            La conexión con la base de datos está funcionando correctamente. Todos los endpoints están respondiendo como esperado.
-          </div>
-        </div>
-      )}
-
-      {tests.length > 0 && tests.some(t => t.status === 'error') && (
-        <div className="alert alert-danger">
-          <div className="alert-title">⚠️ Algunas pruebas fallaron</div>
-          <div className="alert-body">
-            Revisa los mensajes de error arriba. Posibles causas:
-            <ul className="mt-2">
-              <li>Credenciales de Supabase incorrectas</li>
-              <li>La base de datos no está inicializada</li>
-              <li>Problemas de red o firewall</li>
-              <li>Políticas RLS restrictivas en Supabase</li>
-            </ul>
-          </div>
-        </div>
-      )}
+  return <div>
+    <div className="page-header"><div><h1 className="page-title">🔧 Diagnóstico de Base de Datos</h1><p className="page-description">Perfiles locales y conexión opcional con Supabase</p></div>
+      <button className="btn btn-primary" onClick={() => void runDiagnostics()} disabled={working}>{working ? '⏳ Revisando…' : '🚀 Ejecutar diagnóstico'}</button>
     </div>
-  );
+    <div className="card">
+      <h2 className="form-title mb-4">Bases de datos guardadas</h2>
+      <div className="form-grid">
+        <div className="form-group"><label htmlFor="database-profile">Perfil activo</label><select id="database-profile" value={profile.id} onChange={(event) => selectProfile(event.target.value)}>
+          {profiles.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.mode === 'offline' ? 'Solo local' : 'Supabase'}</option>)}
+        </select></div>
+        <div className="form-group" style={{ justifyContent: 'end', flexDirection: 'row', gap: 8, alignItems: 'end' }}>
+          <button className="btn btn-secondary" onClick={createProfile}>＋ Nueva base local</button>
+          <button className="btn btn-secondary" onClick={removeProfile} disabled={profiles.length <= 1}>Eliminar perfil</button>
+        </div>
+      </div>
+      <div className="form-grid mt-4">
+        <div className="form-group"><label htmlFor="profile-name">Nombre de tienda</label><input id="profile-name" value={profile.name} onChange={(event) => updateProfile({ name: event.target.value })} /></div>
+        <div className="form-group"><label htmlFor="profile-mode">Modo de base de datos</label><select id="profile-mode" value={profile.mode} onChange={(event) => updateProfile({ mode: event.target.value as ProfileMode })}>
+          <option value="offline">Solo base local</option><option value="supabase">Local con sincronización Supabase</option>
+        </select></div>
+      </div>
+      {profile.mode === 'supabase' && <div className="form-grid mt-4">
+        <div className="form-group"><label htmlFor="supabase-url">URL de Supabase</label><input id="supabase-url" type="url" placeholder="https://tu-proyecto.supabase.co" value={profile.url} onChange={(event) => updateProfile({ url: event.target.value })} /></div>
+        <div className="form-group"><label htmlFor="supabase-key">Publishable / anon key</label><input id="supabase-key" type="password" autoComplete="off" value={profile.key} onChange={(event) => updateProfile({ key: event.target.value })} /></div>
+      </div>}
+      <div className="flex gap-4 mt-4">
+        <button className="btn btn-primary" onClick={persist}>Guardar perfil</button>
+        {profile.mode === 'supabase' && <button className="btn btn-secondary" onClick={() => void synchronize()} disabled={working || !online || !hasSupabaseConfig(profile)}>{working ? 'Sincronizando…' : '🔄 Sincronizar ahora'}</button>}
+      </div>
+    </div>
+    <div className="card">
+      <h2 className="form-title mb-4">Estado</h2>
+      <p><strong>Conexión a internet:</strong> {online ? 'Disponible' : 'Sin conexión'}</p>
+      <p><strong>Modo actual:</strong> {profile.mode === 'offline' ? 'Solo local' : hasSupabaseConfig(profile) ? 'Base local + Supabase' : 'Faltan credenciales de Supabase'}</p>
+      <p><strong>Cambios pendientes de sincronizar:</strong> {pending}</p>
+      {message && <div className="alert alert-success mt-4"><div className="alert-body">{message}</div></div>}
+    </div>
+  </div>;
 }

@@ -1,6 +1,7 @@
 -- Tabla: Productos (Inventario y Precios)
 CREATE TABLE productos (
   id_producto SERIAL PRIMARY KEY,
+  sync_uid UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
   nombre VARCHAR(255) NOT NULL,
   unidades_por_paquete INTEGER NOT NULL,
   costo_paquete DECIMAL(10, 2) NOT NULL,
@@ -14,6 +15,7 @@ CREATE TABLE productos (
 -- Tabla: Clientes
 CREATE TABLE clientes (
   id_cliente SERIAL PRIMARY KEY,
+  sync_uid UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
   nombre_cliente VARCHAR(255) NOT NULL,
   telefono VARCHAR(50),
   telegram_chat_id BIGINT UNIQUE,
@@ -24,6 +26,7 @@ CREATE TABLE clientes (
 -- Tabla: Ventas (Encabezado de Transacciones)
 CREATE TABLE ventas (
   id_venta SERIAL PRIMARY KEY,
+  sync_uid UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
   fecha TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   id_cliente INTEGER REFERENCES clientes(id_cliente),
   estado_pago VARCHAR(20) NOT NULL DEFAULT 'Pendiente' CHECK (estado_pago IN ('Pagado', 'Pendiente')),
@@ -35,6 +38,7 @@ CREATE TABLE ventas (
 -- Tabla: Detalle_Venta
 CREATE TABLE detalle_venta (
   id_detalle SERIAL PRIMARY KEY,
+  sync_uid UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
   id_venta INTEGER REFERENCES ventas(id_venta) ON DELETE CASCADE,
   id_producto INTEGER REFERENCES productos(id_producto),
   cantidad INTEGER NOT NULL,

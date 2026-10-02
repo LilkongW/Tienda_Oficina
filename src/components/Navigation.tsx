@@ -1,9 +1,26 @@
+import { useEffect, useState } from 'react';
+import { getActiveProfile } from '../lib/databaseProfiles';
+
 interface NavigationProps {
   currentView: string;
   onViewChange: (view: string) => void;
 }
 
 export default function Navigation({ currentView, onViewChange }: NavigationProps) {
+  const [online, setOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    return () => {
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
+    };
+  }, []);
+
+  const profile = getActiveProfile();
+
   const menuItems = [
     { id: 'ventas', label: 'Ventas', icon: '🛒' },
     { id: 'productos', label: 'Productos', icon: '📦' },
@@ -21,12 +38,26 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
             <div className="nav-logo">🏪</div>
             <div>
               <div className="nav-title">Sistema de Ventas</div>
-              <div className="nav-subtitle">Panel de administración</div>
+              <div className="nav-subtitle">{profile.name}</div>
             </div>
           </div>
           <div className="nav-status">
-            <span className="nav-status-dot"></span>
-            Conectado
+            <span
+              className="nav-status-dot"
+              style={{
+                background:
+                  online && profile.mode === 'supabase'
+                    ? 'var(--success-500)'
+                    : '#f59e0b',
+              }}
+            ></span>
+            {profile.mode === 'offline'
+              ? 'Solo local'
+              : !profile.url || !profile.key
+              ? 'Sin configurar'
+              : online
+              ? 'En línea'
+              : 'Sin conexión'}
           </div>
         </div>
         <div className="nav-tabs">

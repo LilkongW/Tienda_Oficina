@@ -12,6 +12,14 @@ Sistema completo para gestionar tu tienda con control de inventario, clientes, v
 
 ## Configuración
 
+La aplicación guarda los datos en una base local persistente del equipo. No es obligatorio configurar Supabase: al abrir **Diagnóstico**, puedes usar el perfil local o crear perfiles locales independientes para distintas tiendas. Los perfiles se guardan en ese equipo y no se comparten entre instalaciones.
+
+Para sincronizar un perfil local con una tienda en Supabase, selecciónalo en **Diagnóstico**, elige **Local con sincronización Supabase** e ingresa la URL y la clave pública (publishable/anon) de esa tienda. La aplicación conserva una copia local, acepta cambios sin conexión y los envía al recuperar internet. También puedes crear un perfil distinto para cada proyecto Supabase.
+
+En bases de datos existentes, ejecuta una vez `supabase/migrations/202610010001_add_offline_sync_keys.sql` en el SQL Editor de cada proyecto conectado. Las instalaciones nuevas ya incluyen esas claves en `supabase/schema.sql`.
+
+La cola de sincronización envía altas, cambios y eliminaciones en orden. Cuando la misma fila se modifica en más de un equipo antes de sincronizar, prevalece la última actualización que recibe Supabase. Configura en cada proyecto las políticas RLS apropiadas para permitir las operaciones de la aplicación.
+
 ### Telegram
 
 La app invoca la función `supabase/functions/telegram-bot`; el token del bot solo debe estar configurado como secreto de Edge Functions, nunca con prefijo `VITE_`.
@@ -23,12 +31,12 @@ La app invoca la función `supabase/functions/telegram-bot`; el token del bot so
 
 Los clientes deben abrir su enlace y pulsar **Iniciar** antes de que el bot pueda enviarles mensajes. El botón de sincronización lee esos `/start` y guarda los `telegram_chat_id`.
 
-### 1. Configurar Supabase
+### 1. Configurar Supabase (opcional)
 
 1. Ve a [Supabase](https://supabase.com) y crea un proyecto nuevo
 2. Ve al SQL Editor y ejecuta el script en `supabase/schema.sql` para crear las tablas
 3. Copia tu URL y API Key desde Settings > API
-4. Agrega las credenciales al archivo `.env`:
+4. Puedes agregar las credenciales al archivo `.env` para que el perfil inicial use ese proyecto, o configurarlas desde **Diagnóstico** dentro de la aplicación:
 
 ```env
 VITE_SUPABASE_URL=tu_url_de_supabase
@@ -117,7 +125,8 @@ npm run dev
 
 - **React 19**: Framework frontend
 - **TypeScript**: Tipado estático
-- **Supabase**: Base de datos y autenticación
+- **IndexedDB**: Base local persistente por perfil
+- **Supabase**: Sincronización remota opcional
 - **Vite**: Herramienta de build
 - **Tailwind CSS**: Estilos (clases de utilidad)
 
@@ -146,8 +155,10 @@ src/
 │   └── ventasService.ts
 ├── types/              # Tipos TypeScript
 │   └── database.ts
-├── lib/               # Utilidades
-│   └── supabase.ts   # Cliente de Supabase
+├── lib/               # Persistencia y sincronización
+│   ├── databaseProfiles.ts # Perfiles locales y clientes Supabase por tienda
+│   ├── localDatabase.ts    # Bases IndexedDB separadas por perfil
+│   └── dataAccess.ts       # Copia local y cola de sincronización
 ├── App.tsx           # Componente principal
 └── App.css           # Estilos globales
 ```
